@@ -1,0 +1,59 @@
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+# ===== اطلاعات اجباری (فقط این دو تا رو خودت می‌سازی) =====
+API_ID = 12345678
+API_HASH = "abcdef123456abcdef123456abcdef12"
+# =======================================================
+
+BOT_TOKEN = "6807172542:AAFCf53hZbohmDQJlB2EcTAZqlp4kdkUXZI"
+
+CHANNEL_USERNAME = "@Fanta_Movies"
+CHANNEL_LINK = "https://t.me/Fanta_Movies"
+
+app = Client(
+    "FantaMoviesBot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
+
+def join_btn():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📢 عضویت در کانال", url=CHANNEL_LINK)]
+    ])
+
+@app.on_message(filters.private & filters.command("start"))
+async def start(client, message):
+    try:
+        await client.get_chat_member(CHANNEL_USERNAME, message.from_user.id)
+    except:
+        await message.reply(
+            "❌ برای استفاده از ربات باید عضو کانال باشید",
+            reply_markup=join_btn()
+        )
+        return
+
+    await message.reply("🎬 سلام عزیزم\nاسم فیلم رو بفرست 😍")
+
+@app.on_message(filters.private & filters.text)
+async def search_movie(client, message):
+    try:
+        await client.get_chat_member(CHANNEL_USERNAME, message.from_user.id)
+    except:
+        await message.reply(
+            "❌ اول عضو کانال شو",
+            reply_markup=join_btn()
+        )
+        return
+
+    query = message.text
+    found = False
+
+    async for msg in client.search_messages(CHANNEL_USERNAME, query, limit=10):
+        if msg.video or msg.document:
+            found = True
+            await msg.copy(message.chat.id)
+
+    if not found:
+        await message.reply("😕 فیلمی با این اسم پیدا نشد")
